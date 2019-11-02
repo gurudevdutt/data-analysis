@@ -44,7 +44,7 @@ def getdata(filename):
     referr = np.sqrt(reference)
     xdata = np.linspace(timestart,timestep*len(signal),len(signal))
     ydata = (signal - reference)/meanref
-    #error bar calculation is not perfect yet, error in meanref needs to
+    #TODO: error bar calculation is not perfect yet, error in meanref needs to
     #be taken into account
     errb = np.sqrt(sigerr**2 + referr**2)/meanref/np.sqrt(numavgs)
     # plt.errorbar(xdata,ydata,yerr=errb,fmt='o')

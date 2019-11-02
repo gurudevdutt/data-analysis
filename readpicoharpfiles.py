@@ -6,6 +6,8 @@ Created on Sun Aug 16 15:41:36 2015
 """
 # This file has been modified on Sept. 23, 2019 by
 # Gurudev Dutt. Mainly to make it compatible with Python 3
+# TODO: code is rather bloated and reproduces stuff like fitting to exponentials
+# TODO: need to simplify and cut bloat.
 
 
 # PicoHarp 300    File Access Utility
