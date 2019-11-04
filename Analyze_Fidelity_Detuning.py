@@ -4,53 +4,56 @@ from scipy.optimize import curve_fit
 import os
 import re
 import matplotlib as mpl
+from AnalyzePulsedESR import getdata # added this import statement  on Nov.1, 2019
 
-dir_path='/Users/gurudevdutt/Dropbox/Pittsburgh/Lab/Analyzed Data/forErin/'
+dir_path='/Users/gurudev/Dropbox/Pittsburgh/Lab/Analyzed Data/forErin/'
 #files = re.split('_')
-def getdata(filename):
-    """ this function reads data from pulsed ESR experiment on Erin/Kai's setup.
-    It takes a filename and returns (xaxis, percent signal, error) """
-    try:
-        my_file_handle = open(filename)
-    except IOError:
-        print("File not found or path is incorrect")
-        raise
-    finally:
-        pass
-    data = np.genfromtxt(filename, delimiter='\t')
-    # get the signal and reference
-    tempsig = data[:,0]
-    tempref = data[:,1]
-    #process the metadata file
-    metadatfile = filename.split(".txt")[0]+".log"
-    mfilehandle=open(metadatfile)
-    mdata = mfilehandle.readlines()
-    mfilehandle.close()
-    numavgs=int(mdata[3].split('\r\n')[0])
-    timestart=float(mdata[1].split('\r\n')[0].split(',')[0].split('[')[1])
-    timestop=float(mdata[1].split('\r\n')[0].split(',')[2].split(']')[0])
-    timestep=float(mdata[1].split('\r\n')[0].split(',')[1])
-    numpoints=mdata[4].split('\t').__len__()-1
 
-    # the signal and refernce arrays need to be partitioned into lists
-    # that are have numavg rows and numpoints columns
-    tempsig = np.array_split(tempsig, numavgs)
-    tempref = np.array_split(tempref, numavgs)
-    #average along the rows
-    signal = np.average(tempsig,axis=0)
-    reference = np.average(tempref,axis=0)
-    meanref = np.mean(reference)
-    #calculate errors in signal and reference and then the x and y data
-    sigerr=np.sqrt(signal)
-    referr = np.sqrt(reference)
-    xdata = np.linspace(timestart,timestep*len(signal),len(signal))
-    ydata = (signal - reference)/meanref
-    #error bar calculation is not perfect yet, error in meanref needs to
-    #be taken into account
-    errb = np.sqrt(sigerr**2 + referr**2)/meanref/np.sqrt(numavgs)
-    # plt.errorbar(xdata,ydata,yerr=errb,fmt='o')
-    # plt.show()
-    return xdata,ydata,errb
+# Instead of copying over the getdata function, I used import instead
+# def getdata(filename):
+#     """ this function reads data from pulsed ESR experiment on Erin/Kai's setup.
+#     It takes a filename and returns (xaxis, percent signal, error) """
+#     try:
+#         my_file_handle = open(filename)
+#     except IOError:
+#         print("File not found or path is incorrect")
+#         raise
+#     finally:
+#         pass
+#     data = np.genfromtxt(filename, delimiter='\t')
+#     # get the signal and reference
+#     tempsig = data[:,0]
+#     tempref = data[:,1]
+#     #process the metadata file
+#     metadatfile = filename.split(".txt")[0]+".log"
+#     mfilehandle=open(metadatfile)
+#     mdata = mfilehandle.readlines()
+#     mfilehandle.close()
+#     numavgs=int(mdata[3].split('\r\n')[0])
+#     timestart=float(mdata[1].split('\r\n')[0].split(',')[0].split('[')[1])
+#     timestop=float(mdata[1].split('\r\n')[0].split(',')[2].split(']')[0])
+#     timestep=float(mdata[1].split('\r\n')[0].split(',')[1])
+#     numpoints=mdata[4].split('\t').__len__()-1
+#
+#     # the signal and refernce arrays need to be partitioned into lists
+#     # that are have numavg rows and numpoints columns
+#     tempsig = np.array_split(tempsig, numavgs)
+#     tempref = np.array_split(tempref, numavgs)
+#     #average along the rows
+#     signal = np.average(tempsig,axis=0)
+#     reference = np.average(tempref,axis=0)
+#     meanref = np.mean(reference)
+#     #calculate errors in signal and reference and then the x and y data
+#     sigerr=np.sqrt(signal)
+#     referr = np.sqrt(reference)
+#     xdata = np.linspace(timestart,timestep*len(signal),len(signal))
+#     ydata = (signal - reference)/meanref
+#     #error bar calculation is not perfect yet, error in meanref needs to
+#     #be taken into account
+#     errb = np.sqrt(sigerr**2 + referr**2)/meanref/np.sqrt(numavgs)
+#     # plt.errorbar(xdata,ydata,yerr=errb,fmt='o')
+#     # plt.show()
+#     return xdata,ydata,errb
 
 def rabifunc(x, a1,a2,a3,a4,a5):
     return a1 + a2 * np.cos(2*np.pi*x/a3 + a4) * np.exp(-a5*x)
@@ -179,10 +182,12 @@ if __name__ == "__main__":
     for i in range(len(plotxdata)):
         for j in range(len(plotxdata[i])):
             # now get the frequency from the file name, requires use of re.split
+            # TODO: should use os.sep instead
             filestr = datfiles[idx].split('/')[1]
             freqstr = re.split('_',re.split('GHz',filestr)[0])[-1]
             #print('drow', i, 'dcol:', j, 'didx:', idx,'dval:', len(plotydata[i][j]))
             # np.float32('2.'+re.split('_',re.split('GHz',filestr)[0])[-1])
+            # TODO: make the layout of plots more pretty
             ax[i, j].errorbar(plotxdata[i][j], plotydata[i][j], yerr=plotyerrbdata[i][j], fmt='o',label=freqstr)
             ax[i,j].set_title(freqstr)
             ax[i,j].set_xlabel(r'Number of pulses (n)')
@@ -193,6 +198,8 @@ if __name__ == "__main__":
             #ax[i, j].annotate('fidelity:' + fidel)
             #maxfidel = plotydata[i][j].max(axis=0)
             #print('fileidx:',(idx),'file:', freqstr,'fidelity:',fidel)
+            # there seems to be some issue with the data that makes fidelity > 1 so fudging that with a
+            # offset for now. will need to check this more carefully for publications
             fideldetunarr = np.vstack((fideldetunarr,np.array([[np.float32(freqstr),fidel-0.1,fidelerr]])))
             idx+=1
     #fig.savefig('gaussian_detuning_all_v3.pdf',bbox_inches='tight')
